@@ -1,4 +1,5 @@
 {
+    "name": "undemanding/difference",
     "autoload": {
         "psr-4": {
             "Undemanding\\Difference\\": "src"
