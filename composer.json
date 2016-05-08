@@ -1,5 +1,7 @@
 {
     "name": "undemanding/difference",
+    "description": "Calculate the difference in images",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Undemanding\\Difference\\": "src"
