@@ -2,6 +2,7 @@
 
 require __DIR__ . "/../vendor/autoload.php";
 
+use Undemanding\Difference\ConnectedDifferences;
 use Undemanding\Difference\Image;
 use Undemanding\Difference\Method\EuclideanDistance;
 
@@ -38,3 +39,30 @@ $difference4 = $image1->difference($image5, new EuclideanDistance());
 
 print "white difference: " .  $difference3->percentage() . "\n";
 print "black difference: " .  $difference4->percentage() . "\n";
+
+// and now, for something completely different...
+
+$image1 = new Image(__DIR__ . "/images/fez-1.png");
+$image2 = new Image(__DIR__ . "/images/fez-2.png");
+
+$difference1 = $image1->difference($image2, new EuclideanDistance())
+    ->withScale(200)
+    ->withReducedStandardDeviation();
+
+$connected1 = new ConnectedDifferences($difference1);
+
+$handle = imagecreatefrompng(__DIR__ . "/images/fez-2.png");
+$color = imagecolorallocate($handle, 0, 0, 0);
+
+foreach ($connected1->withJoinedBoundaries()->boundaries() as $boundary) {
+    imagerectangle(
+        $handle,
+        $boundary["left"],
+        $boundary["top"],
+        $boundary["right"],
+        $boundary["bottom"],
+        $color
+    );
+}
+
+imagepng($handle, __DIR__ . "/images/connected.png");

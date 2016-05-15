@@ -41,6 +41,22 @@ class Difference
     }
 
     /**
+     * @return int
+     */
+    public function getWidth()
+    {
+        return $this->width;
+    }
+
+    /**
+     * @return int
+     */
+    public function getHeight()
+    {
+        return $this->height;
+    }
+
+    /**
      * New Difference with scaled differences.
      *
      * @param float $factor
