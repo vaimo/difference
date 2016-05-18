@@ -42,19 +42,17 @@ print "black difference: " .  $difference4->percentage() . "\n";
 
 // and now, for something completely different...
 
-$image1 = new Image(__DIR__ . "/images/fez-1.png");
-$image2 = new Image(__DIR__ . "/images/fez-2.png");
+$image1 = new Image(__DIR__ . "/images/spot-1.png");
+$image2 = new Image(__DIR__ . "/images/spot-2.png");
 
-$difference1 = $image1->difference($image2, new EuclideanDistance())
-    ->withScale(200)
-    ->withReducedStandardDeviation();
-
+$difference1 = $image1->difference($image2, new EuclideanDistance())->withReducedStandardDeviation();
 $connected1 = new ConnectedDifferences($difference1);
 
-$handle = imagecreatefrompng(__DIR__ . "/images/fez-2.png");
+$handle = imagecreatefrompng(__DIR__ . "/images/spot-2.png");
 $color = imagecolorallocate($handle, 0, 0, 0);
 
-foreach ($connected1->withJoinedBoundaries()->boundaries() as $boundary) {
+// foreach ($connected1->withJoinedBoundaries()->boundaries() as $boundary) {
+foreach ($connected1->boundaries() as $boundary) {
     imagerectangle(
         $handle,
         $boundary["left"],
