@@ -22,7 +22,7 @@ class Percentage
             for ($x = 0; $x < $width; $x++) {
                 $total++;
 
-                if ($bitmap[$y][$x] > 0) {
+                if (isset($bitmap[$y][$x]) && $bitmap[$y][$x] > 0) {
                     $different++;
                 }
             }

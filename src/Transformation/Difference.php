@@ -23,6 +23,10 @@ class Difference
             $new[$y] = [];
 
             for ($x = 0; $x < $width; $x++) {
+                if (!isset($bitmap1[$y][$x]) || !isset($bitmap2[$y][$x])) {
+                    continue;
+                }
+
                 $new[$y][$x] = $method(
                     $bitmap1[$y][$x],
                     $bitmap2[$y][$x]

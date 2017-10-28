@@ -15,21 +15,25 @@ class Difference
     /**
      * @var int
      */
-    private $width;
+    private $height;
 
     /**
      * @var int
      */
-    private $height;
+    private $width;
 
-    /**
-     * @param Image $image
-     */
-    public function __construct(Image $image)
+    public function __construct(array $bitmap)
     {
-        $this->bitmap = $image->getBitmap();
-        $this->width = $image->getWidth();
-        $this->height = $image->getHeight();
+        $this->bitmap = $bitmap;
+
+        end($bitmap);
+        $this->height = key($bitmap);
+
+        end($bitmap[$this->height]);
+        $this->width = key($bitmap[$this->height]);
+
+        reset($bitmap);
+        reset($bitmap[$this->height]);
     }
 
     /**
@@ -40,17 +44,11 @@ class Difference
         return $this->bitmap;
     }
 
-    /**
-     * @return int
-     */
     public function getWidth()
     {
         return $this->width;
     }
 
-    /**
-     * @return int
-     */
     public function getHeight()
     {
         return $this->height;
@@ -69,7 +67,11 @@ class Difference
         $transformation = new Transformation\Scale();
 
         $bitmap = $transformation(
-            $this->bitmap, $this->width, $this->height, $maximum, $factor
+            $this->bitmap,
+            $this->width,
+            $this->height,
+            $maximum,
+            $factor
         );
 
         return $this->cloneWith("bitmap", $bitmap);
@@ -100,7 +102,10 @@ class Difference
         $transformation = new Transformation\ReducedStandardDeviation();
 
         $bitmap = $transformation(
-            $this->bitmap, $this->width, $this->height, $deviation
+            $this->bitmap,
+            $this->width,
+            $this->height,
+            $deviation
         );
 
         return $this->cloneWith("bitmap", $bitmap);
@@ -206,7 +211,9 @@ class Difference
         $calculation = new Calculation\Percentage();
 
         return $calculation(
-            $this->bitmap, $this->width, $this->height
+            $this->bitmap,
+            $this->width,
+            $this->height
         );
     }
 }

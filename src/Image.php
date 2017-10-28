@@ -8,19 +8,19 @@ use Undemanding\Difference\Transformation;
 class Image
 {
     /**
+     * @var string
+     */
+    private $imagePath;
+
+    /**
+     * @var null|\resource
+     */
+    private $image;
+
+    /**
      * @var array
      */
-    private $bitmap;
-
-    /**
-     * @var int
-     */
-    private $width;
-
-    /**
-     * @var int
-     */
-    private $height;
+    private $bitmap = [];
 
     /**
      * @param string $path
@@ -31,13 +31,39 @@ class Image
             throw new InvalidArgumentException("image not found");
         }
 
-        $image = $this->createImage($path);
+        $this->imagePath = $path;
+    }
 
-        $this->bitmap = $this->createBitmap(
+    public function getCore()
+    {
+        if ($this->image === null) {
+            $this->image = $this->loadImage($this->imagePath);
+        }
+
+        return $this->image;
+    }
+
+    public function destroy()
+    {
+        if ($this->image === null) {
+            return;
+        }
+
+        unset($this->bitmap);
+        imagedestroy($this->image);
+    }
+
+    public function getBitmap($width = 0, $height = 0)
+    {
+        $image = $this->getCore();
+
+        $this->allocateBitmap(
             $image,
-            $this->width = imagesx($image),
-            $this->height = imagesy($image)
+            $width ?: imagesx($image),
+            $height ?: imagesy($image)
         );
+
+        return $this->bitmap;
     }
 
     /**
@@ -49,28 +75,20 @@ class Image
      *
      * @throws InvalidArgumentException
      */
-    private function createImage($path)
+    private function loadImage($path)
     {
         $info = getimagesize($path);
-        $type = $info[2];
 
-        $image = null;
-
-        if ($type == IMAGETYPE_JPEG) {
-            $image = imagecreatefromjpeg($path);
-        }
-        if ($type == IMAGETYPE_GIF) {
-            $image = imagecreatefromgif($path);
-        }
-        if ($type == IMAGETYPE_PNG) {
-            $image = imagecreatefrompng($path);
+        switch ($type = $info[2]) {
+            case IMAGETYPE_JPEG:
+                return imagecreatefromjpeg($path);
+            case IMAGETYPE_GIF:
+                return imagecreatefromgif($path);
+            case IMAGETYPE_PNG:
+                return imagecreatefrompng($path);
         }
 
-        if (!$image) {
-            throw new InvalidArgumentException("image invalid");
-        }
-
-        return $image;
+        throw new InvalidArgumentException(sprintf("Invalid image type: %s", $type));
     }
 
     /**
@@ -82,25 +100,21 @@ class Image
      *
      * @return array
      */
-    private function createBitmap($image, $width, $height)
+    private function allocateBitmap($image, $width, $height)
     {
-        $bitmap = [];
+        for ($y = $this->getAllocatedHeight(); $y < $height; $y++) {
+            $this->bitmap[$y] = [];
 
-        for ($y = 0; $y < $height; $y++) {
-            $bitmap[$y] = [];
-
-            for ($x = 0; $x < $width; $x++) {
+            for ($x = $this->getAllocatedWidth(); $x < $width; $x++) {
                 $color = imagecolorat($image, $x, $y);
 
-                $bitmap[$y][$x] = [
+                $this->bitmap[$y][$x] = [
                     "r" => ($color >> 16) & 0xFF,
                     "g" => ($color >> 8) & 0xFF,
                     "b" => $color & 0xFF
                 ];
             }
         }
-
-        return $bitmap;
     }
 
     /**
@@ -115,50 +129,51 @@ class Image
     {
         $transformation = new Transformation\Difference();
 
+        $minWidth = min($this->getWidth(), $image->getWidth());
+        $minHeight = min($this->getHeight(), $image->getHeight());
+
         $bitmap = $transformation(
-            $this->bitmap, $image->bitmap, $this->width, $this->height, $method
+            $this->getBitmap($minWidth, $minHeight),
+            $image->getBitmap($minWidth, $minHeight),
+            $minWidth,
+            $minHeight,
+            $method
         );
 
-        return new Difference(
-            $this->cloneWith("bitmap", $bitmap)
-        );
+        return new Difference($bitmap);
     }
 
-    /**
-     * @param string $property
-     * @param mixed $value
-     *
-     * @return Image
-     */
-    private function cloneWith($property, $value)
-    {
-        $clone = clone $this;
-        $clone->$property = $value;
-
-        return $clone;
-    }
-
-    /**
-     * @return array
-     */
-    public function getBitmap()
-    {
-        return $this->bitmap;
-    }
-
-    /**
-     * @return int
-     */
     public function getWidth()
     {
-        return $this->width;
+        return imagesx($this->getCore());
     }
 
-    /**
-     * @return int
-     */
     public function getHeight()
     {
-        return $this->height;
+        return imagesy($this->getCore());
+    }
+
+    public function getAllocatedWidth()
+    {
+        $height = $this->getAllocatedHeight();
+
+        end($this->bitmap[$height]);
+
+        $width = key($this->bitmap[$height]) ?: 0;
+
+        reset($this->bitmap[$height]);
+
+        return $width;
+    }
+
+    public function getAllocatedHeight()
+    {
+        end($this->bitmap);
+
+        $height = key($this->bitmap) ?: 0;
+
+        reset($this->bitmap);
+
+        return $height;
     }
 }

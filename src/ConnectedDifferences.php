@@ -47,7 +47,7 @@ class ConnectedDifferences
 
         for ($y = 0; $y < $this->height; $y++) {
             for ($x = 0; $x < $this->width; $x++) {
-                if ($this->bitmap[$y][$x] > 0) {
+                if (isset($this->bitmap[$y][$x]) && $this->bitmap[$y][$x] > 0) {
                     $pixels["{$x}:{$y}"] = [
                         "group" => null,
                         "x" => $x,
