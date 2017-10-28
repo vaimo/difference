@@ -2,6 +2,16 @@
     "name": "vaimo/image-difference",
     "description": "Calculate the difference in images",
     "license": "MIT",
+    "authors": [
+        {
+            "name": "Christopher Pitt",
+            "email": "cgpitt@gmail.com"
+        },
+        {
+            "name": "Allan Paiste",
+            "email": "allan.paiste@gmail.com"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Undemanding\\Difference\\": "src"

@@ -43,14 +43,16 @@ class Image
         return $this->image;
     }
 
-    public function destroy()
+    public function reset()
     {
-        if ($this->image === null) {
-            return;
+        if ($this->image !== null) {
+            @imagedestroy($this->image);
         }
 
         unset($this->bitmap);
-        imagedestroy($this->image);
+
+        $this->image = null;
+        $this->bitmap = [];
     }
 
     public function getBitmap($width = 0, $height = 0)
@@ -97,8 +99,6 @@ class Image
      * @param resource $image
      * @param int $width
      * @param int $height
-     *
-     * @return array
      */
     private function allocateBitmap($image, $width, $height)
     {
@@ -118,8 +118,6 @@ class Image
     }
 
     /**
-     * Difference between two bitmap states.
-     *
      * @param Image $image
      * @param callable $method
      *
