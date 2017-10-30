@@ -7,6 +7,11 @@ class ConnectedDifferences
     /**
      * @var array
      */
+    private $offset;
+
+    /**
+     * @var array
+     */
     private $bitmap;
 
     /**
@@ -29,6 +34,7 @@ class ConnectedDifferences
      */
     public function __construct(Difference $difference)
     {
+        $this->offset = $difference->getOffset();
         $this->bitmap = $difference->getBitmap();
         $this->width = $difference->getWidth();
         $this->height = $difference->getHeight();
@@ -118,10 +124,10 @@ class ConnectedDifferences
             }
 
             array_push($boundaries, [
-                "top" => $ay,
-                "right" => $bx,
-                "bottom" => $by,
-                "left" => $ax,
+                "left" => $ax + $this->offset[0],
+                "top" => $ay + $this->offset[1],
+                "bottom" => $by + $this->offset[1],
+                "right" => $bx + $this->offset[0],
             ]);
         }
 
@@ -210,7 +216,8 @@ class ConnectedDifferences
      */
     private function intersect(array $p, array $q)
     {
-        return max($p["left"], $q["left"]) <= min($p["right"], $q["right"]) and max($p["top"], $q["top"]) <= min($p["bottom"], $q["bottom"]);
+        return max($p["left"], $q["left"]) <= min($p["right"], $q["right"])
+            and max($p["top"], $q["top"]) <= min($p["bottom"], $q["bottom"]);
     }
 
     /**

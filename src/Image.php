@@ -8,110 +8,47 @@ use Undemanding\Difference\Transformation;
 class Image
 {
     /**
-     * @var string
-     */
-    private $imagePath;
-
-    /**
      * @var null|\resource
      */
-    private $image;
+    protected $resource;
 
     /**
      * @var array
      */
-    private $bitmap = [];
+    protected $bitmap = [];
 
     /**
-     * @param string $path
+     * @param resource $image
      */
-    public function __construct($path)
+    public function __construct($image)
     {
-        if (!file_exists($path)) {
-            throw new InvalidArgumentException("image not found");
-        }
-
-        $this->imagePath = $path;
+        $this->resource = $image;
     }
 
     public function getCore()
     {
-        if ($this->image === null) {
-            $this->image = $this->loadImage($this->imagePath);
-        }
-
-        return $this->image;
+        return $this->resource;
     }
 
     public function reset()
     {
-        if ($this->image !== null) {
-            @imagedestroy($this->image);
-        }
-
         unset($this->bitmap);
 
-        $this->image = null;
         $this->bitmap = [];
     }
 
-    public function getBitmap($width = 0, $height = 0)
+    private function allocateBitmap(&$bitmap, $image, $width, $height)
     {
-        $image = $this->getCore();
+        for ($y = $this->getAllocatedHeight($bitmap); $y < $height; $y++) {
+            $bitmap[$y] = [];
 
-        $this->allocateBitmap(
-            $image,
-            $width ?: imagesx($image),
-            $height ?: imagesy($image)
-        );
-
-        return $this->bitmap;
-    }
-
-    /**
-     * Create new image resource from image path.
-     *
-     * @param string $path
-     *
-     * @return resource
-     *
-     * @throws InvalidArgumentException
-     */
-    private function loadImage($path)
-    {
-        $info = getimagesize($path);
-
-        switch ($type = $info[2]) {
-            case IMAGETYPE_JPEG:
-                return imagecreatefromjpeg($path);
-            case IMAGETYPE_GIF:
-                return imagecreatefromgif($path);
-            case IMAGETYPE_PNG:
-                return imagecreatefrompng($path);
-        }
-
-        throw new InvalidArgumentException(sprintf("Invalid image type: %s", $type));
-    }
-
-    /**
-     * Creates new bitmap from image resource.
-     *
-     * @param resource $image
-     * @param int $width
-     * @param int $height
-     */
-    private function allocateBitmap($image, $width, $height)
-    {
-        for ($y = $this->getAllocatedHeight(); $y < $height; $y++) {
-            $this->bitmap[$y] = [];
-
-            for ($x = $this->getAllocatedWidth(); $x < $width; $x++) {
+            for ($x = $this->getAllocatedWidth($bitmap); $x < $width; $x++) {
                 $color = imagecolorat($image, $x, $y);
 
-                $this->bitmap[$y][$x] = [
-                    "r" => ($color >> 16) & 0xFF,
-                    "g" => ($color >> 8) & 0xFF,
-                    "b" => $color & 0xFF
+                $bitmap[$y][$x] = [
+                    'r' => ($color >> 16) & 0xFF,
+                    'g' => ($color >> 8) & 0xFF,
+                    'b' => $color & 0xFF
                 ];
             }
         }
@@ -120,25 +57,62 @@ class Image
     /**
      * @param Image $image
      * @param callable $method
+     * @param $offset
      *
      * @return Difference
      */
-    public function difference(Image $image, callable $method)
+    public function difference(Image $image, array $offset = [0, 0], $method = null)
     {
         $transformation = new Transformation\Difference();
 
         $minWidth = min($this->getWidth(), $image->getWidth());
         $minHeight = min($this->getHeight(), $image->getHeight());
 
-        $bitmap = $transformation(
-            $this->getBitmap($minWidth, $minHeight),
-            $image->getBitmap($minWidth, $minHeight),
-            $minWidth,
-            $minHeight,
-            $method
+        $width = $minWidth + $offset[0];
+        $height = $minHeight + $offset[1];
+
+        $this->allocateBitmap(
+            $this->bitmap,
+            $this->resource,
+            min($this->getWidth(), $width),
+            min($this->getHeight(), $height)
         );
 
-        return new Difference($bitmap);
+        $this->allocateBitmap(
+            $image->bitmap,
+            $image->resource,
+            min($image->getWidth(), $width),
+            min($image->getHeight(), $height)
+        );
+
+        $diffBitmap = $transformation($this->bitmap, $image->bitmap, $minWidth, $minHeight, $offset, $method);
+
+        return new Difference($diffBitmap, $offset);
+    }
+
+    public function scaleBitmap($bitmap, $factor)
+    {
+        $maximum = $this->maximum($bitmap);
+        $transformation = new Transformation\Scale();
+
+        return $transformation(
+            $bitmap,
+            $this->getAllocatedWidth($bitmap),
+            $this->getAllocatedHeight($bitmap),
+            $maximum,
+            $factor
+        );
+    }
+
+    private function maximum($bitmap)
+    {
+        $calculation = new Calculation\Maximum();
+
+        return $calculation(
+            $bitmap,
+            $this->getAllocatedWidth($bitmap),
+            $this->getAllocatedHeight($bitmap)
+        );
     }
 
     public function getWidth()
@@ -151,26 +125,26 @@ class Image
         return imagesy($this->getCore());
     }
 
-    public function getAllocatedWidth()
+    public function getAllocatedWidth(&$bitmap)
     {
-        $height = $this->getAllocatedHeight();
+        $height = $this->getAllocatedHeight($bitmap);
 
-        end($this->bitmap[$height]);
+        end($bitmap[$height]);
 
-        $width = key($this->bitmap[$height]) ?: 0;
+        $width = key($bitmap[$height]) ?: 0;
 
-        reset($this->bitmap[$height]);
+        reset($bitmap[$height]);
 
         return $width;
     }
 
-    public function getAllocatedHeight()
+    public function getAllocatedHeight(&$bitmap)
     {
-        end($this->bitmap);
+        end($bitmap);
 
-        $height = key($this->bitmap) ?: 0;
+        $height = key($bitmap) ?: 0;
 
-        reset($this->bitmap);
+        reset($bitmap);
 
         return $height;
     }

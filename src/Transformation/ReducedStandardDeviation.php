@@ -14,7 +14,7 @@ class ReducedStandardDeviation
      *
      * @return array
      */
-    public function __invoke(array $bitmap, $width, $height, $deviation)
+    public function __invoke(array &$bitmap, $width, $height, $deviation)
     {
         $new = array_slice($bitmap, 0);
 

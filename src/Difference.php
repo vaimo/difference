@@ -13,6 +13,11 @@ class Difference
     private $bitmap;
 
     /**
+     * @var array
+     */
+    private $offset;
+
+    /**
      * @var int
      */
     private $height;
@@ -22,9 +27,10 @@ class Difference
      */
     private $width;
 
-    public function __construct(array $bitmap)
+    public function __construct(array &$bitmap, $offset)
     {
         $this->bitmap = $bitmap;
+        $this->offset = $offset;
 
         end($bitmap);
         $this->height = key($bitmap);
@@ -34,6 +40,11 @@ class Difference
 
         reset($bitmap);
         reset($bitmap[$this->height]);
+    }
+
+    public function getOffset()
+    {
+        return $this->offset;
     }
 
     /**
@@ -52,43 +63,6 @@ class Difference
     public function getHeight()
     {
         return $this->height;
-    }
-
-    /**
-     * New Difference with scaled differences.
-     *
-     * @param float $factor
-     *
-     * @return Difference
-     */
-    public function withScale($factor)
-    {
-        $maximum = $this->maximum();
-        $transformation = new Transformation\Scale();
-
-        $bitmap = $transformation(
-            $this->bitmap,
-            $this->width,
-            $this->height,
-            $maximum,
-            $factor
-        );
-
-        return $this->cloneWith("bitmap", $bitmap);
-    }
-
-    /**
-     * Maximum difference for all bitmap pixels.
-     *
-     * @return int
-     */
-    private function maximum()
-    {
-        $calculation = new Calculation\Maximum();
-
-        return $calculation(
-            $this->bitmap, $this->width, $this->height
-        );
     }
 
     /**

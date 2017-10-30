@@ -14,7 +14,7 @@ class StandardDeviation
      *
      * @return float
      */
-    public function __invoke(array $map, $width, $height, $average)
+    public function __invoke(array &$map, $width, $height, $average)
     {
         $standardDeviation = 0;
 

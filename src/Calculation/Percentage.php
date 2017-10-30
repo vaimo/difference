@@ -13,7 +13,7 @@ class Percentage
      *
      * @return float
      */
-    public function __invoke(array $bitmap, $width, $height)
+    public function __invoke(array &$bitmap, $width, $height)
     {
         $total = 0;
         $different = 0;
@@ -28,6 +28,6 @@ class Percentage
             }
         }
 
-        return (float) (($different / $total) * 100);
+        return (float)(($different / $total) * 100);
     }
 }
